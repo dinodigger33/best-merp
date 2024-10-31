@@ -28,7 +28,7 @@
 
   // Floor (collidable)
   const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(50, 50),
+    new THREE.PlaneGeometry(100, 100),
     new THREE.MeshStandardMaterial({ color: 0x808080 })
   );
   floor.rotation.x = -Math.PI / 2;
@@ -36,8 +36,8 @@
 
   // Player setup
   const player = {
-    speed: 0.3,
-    jumpStrength: 0.3,
+    speed: 1,
+    jumpStrength: 5,
     velocity: new THREE.Vector3(),
     direction: new THREE.Vector3(),
     canJump: false,
