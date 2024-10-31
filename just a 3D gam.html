@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3D Game with Adjusted Camera and Speed</title>
+  <title>3D Game with Fixed Camera Yaw and Pitch</title>
   <style>
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
@@ -16,7 +16,6 @@
 
   // Scene setup
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
   const renderer = new THREE.WebGLRenderer();
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
@@ -34,15 +33,21 @@
   floor.rotation.x = -Math.PI / 2;
   scene.add(floor);
 
+  // Camera setup with a container
+  const cameraContainer = new THREE.Object3D();
+  scene.add(cameraContainer);
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.set(0, 2, 0);  // Set camera height to 2 units
+  cameraContainer.add(camera);
+
   // Player setup
   const player = {
-    speed: 1,
+    speed: 3,
     jumpStrength: 5,
     velocity: new THREE.Vector3(),
     direction: new THREE.Vector3(),
     canJump: false,
   };
-  camera.position.set(0, 2, 5); // Set camera to be 2 units high (twice the block height)
 
   // Create objects to collide with
   const objects = [];
@@ -80,7 +85,8 @@
       yaw -= event.movementX * 0.002;
       pitch -= event.movementY * 0.002;
       pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch)); // Constrain pitch to avoid flipping
-      camera.rotation.set(pitch, yaw, 0); // Only adjust pitch and yaw, no roll
+      cameraContainer.rotation.y = yaw; // Rotate the container horizontally
+      camera.rotation.x = pitch;       // Rotate the camera vertically
     }
   });
 
@@ -112,7 +118,7 @@
     player.velocity.y -= 9.8 * deltaTime;  // Gravity
 
     // Next position
-    const nextPosition = camera.position.clone().add(player.velocity.clone().multiplyScalar(deltaTime));
+    const nextPosition = cameraContainer.position.clone().add(player.velocity.clone().multiplyScalar(deltaTime));
     
     // Check for collisions with objects and floor
     player.canJump = false;
@@ -138,7 +144,7 @@
       player.canJump = true;
     }
 
-    camera.position.copy(nextPosition);
+    cameraContainer.position.copy(nextPosition);
   }
 
   // Animation loop
