@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Game with WASD Movement and Collisions</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+
+<script type="module">
+  import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.module.js';
+
+  // Scene setup
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  const renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  // Lighting
+  const light = new THREE.DirectionalLight(0xffffff, 0.5);
+  light.position.set(1, 1, 1);
+  scene.add(light);
+
+  // Player setup
+  const player = { speed: 0.1, velocity: new THREE.Vector3(), direction: new THREE.Vector3() };
+  camera.position.set(0, 1.6, 5); // Slightly above ground
+
+  // Create objects to collide with
+  const objects = [];
+  for (let i = 0; i < 10; i++) {
+    const box = new THREE.Mesh(
+      new THREE.BoxGeometry(),
+      new THREE.MeshStandardMaterial({ color: Math.random() * 0xffffff })
+    );
+    box.position.set(Math.random() * 20 - 10, 0.5, Math.random() * 20 - 10);
+    scene.add(box);
+    objects.push(box);
+  }
+
+  // Floor
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(50, 50),
+    new THREE.MeshStandardMaterial({ color: 0x808080 })
+  );
+  floor.rotation.x = -Math.PI / 2;
+  scene.add(floor);
+
+  // Movement controls
+  const keys = {};
+  window.addEventListener('keydown', (event) => { keys[event.key] = true; });
+  window.addEventListener('keyup', (event) => { keys[event.key] = false; });
+
+  // Mouse look controls
+  let isPointerLocked = false;
+  document.body.addEventListener('click', () => {
+    document.body.requestPointerLock();
+  });
+
+  document.addEventListener('mousemove', (event) => {
+    if (isPointerLocked) {
+      camera.rotation.y -= event.movementX * 0.002;
+      camera.rotation.x -= event.movementY * 0.002;
+      camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
+    }
+  });
+
+  document.addEventListener('pointerlockchange', () => {
+    isPointerLocked = !!document.pointerLockElement;
+  });
+
+  // Update movement and collision
+  function updateMovement() {
+    player.direction.set(0, 0, 0);
+
+    if (keys['w']) player.direction.z -= 1;
+    if (keys['s']) player.direction.z += 1;
+    if (keys['a']) player.direction.x -= 1;
+    if (keys['d']) player.direction.x += 1;
+
+    player.direction.normalize();
+    player.direction.applyEuler(camera.rotation);
+    player.velocity.copy(player.direction).multiplyScalar(player.speed);
+
+    // Check collisions
+    const nextPosition = camera.position.clone().add(player.velocity);
+    let collision = false;
+
+    for (const object of objects) {
+      const distance = object.position.distanceTo(nextPosition);
+      if (distance < 1) { // Adjust collision distance if needed
+        collision = true;
+        break;
+      }
+    }
+
+    if (!collision) camera.position.add(player.velocity);
+  }
+
+  // Animation loop
+  function animate() {
+    requestAnimationFrame(animate);
+    updateMovement();
+    renderer.render(scene, camera);
+  }
+
+  animate();
+
+  // Handle resizing
+  window.addEventListener('resize', () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+  });
+</script>
+
+</body>
+</html>
