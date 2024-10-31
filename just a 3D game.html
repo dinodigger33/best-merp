@@ -26,7 +26,7 @@
   light.position.set(1, 1, 1);
   scene.add(light);
 
-  // Floor
+  // Floor (collidable)
   const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(50, 50),
     new THREE.MeshStandardMaterial({ color: 0x808080 })
@@ -42,7 +42,7 @@
     direction: new THREE.Vector3(),
     canJump: false,
   };
-  camera.position.set(0, 1.6, 5);
+  camera.position.set(0, 2, 5); // Spawn slightly above the floor
 
   // Create objects to collide with
   const objects = [];
@@ -55,6 +55,9 @@
     scene.add(box);
     objects.push(box);
   }
+
+  // Floor bounding box for collision detection
+  const floorBox = new THREE.Box3().setFromObject(floor);
 
   // Movement controls
   const keys = {};
@@ -111,23 +114,31 @@
     // Next position
     const nextPosition = camera.position.clone().add(player.velocity.clone().multiplyScalar(deltaTime));
     
-    // Check for collisions and slide if needed
+    // Check for collisions with objects and floor
     player.canJump = false;
     for (const object of objects) {
       const box = new THREE.Box3().setFromObject(object);
       if (box.containsPoint(nextPosition)) {
-        // If colliding on Y axis, assume grounded and allow jumping
-        if (Math.abs(player.velocity.y) > Math.abs(player.velocity.x) || Math.abs(player.velocity.y) > Math.abs(player.velocity.z)) {
+        // Slide along the obstacle surface
+        if (Math.abs(player.velocity.x) > Math.abs(player.velocity.y) && Math.abs(player.velocity.x) > Math.abs(player.velocity.z)) {
+          player.velocity.x = 0;
+        } else if (Math.abs(player.velocity.z) > Math.abs(player.velocity.x) && Math.abs(player.velocity.z) > Math.abs(player.velocity.y)) {
+          player.velocity.z = 0;
+        } else {
           player.velocity.y = 0;
           player.canJump = true;
-        } else {
-          // Slide along the obstacle surface
-          player.velocity.x = 0;
-          player.velocity.z = 0;
         }
       }
     }
-    camera.position.add(player.velocity.clone().multiplyScalar(deltaTime));
+
+    // Check for collision with floor
+    if (nextPosition.y < floorBox.max.y + 1) { // Adjust collision distance as needed
+      nextPosition.y = floorBox.max.y + 1; // Keep player above the floor
+      player.velocity.y = 0;
+      player.canJump = true;
+    }
+
+    camera.position.copy(nextPosition);
   }
 
   // Animation loop
