@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3D Game with Gravity, Jumping, and Smooth Collisions</title>
+  <title>3D Game with Gravity, Jumping, and Smooth Camera</title>
   <style>
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
@@ -36,7 +36,7 @@
 
   // Player setup
   const player = {
-    speed: 0.1,
+    speed: 0.15,
     jumpStrength: 0.2,
     velocity: new THREE.Vector3(),
     direction: new THREE.Vector3(),
@@ -79,8 +79,8 @@
     if (isPointerLocked) {
       yaw -= event.movementX * 0.002;
       pitch -= event.movementY * 0.002;
-      pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
-      camera.rotation.set(pitch, yaw, 0);
+      pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch)); // Constrain pitch to avoid flipping
+      camera.rotation.set(pitch, yaw, 0); // Only adjust pitch and yaw
     }
   });
 
@@ -106,7 +106,7 @@
     player.direction.normalize();
     
     // Apply rotation and gravity
-    player.direction.applyEuler(camera.rotation);
+    player.direction.applyEuler(new THREE.Euler(0, yaw, 0)); // Move relative to yaw only
     player.velocity.x = player.direction.x * player.speed;
     player.velocity.z = player.direction.z * player.speed;
     player.velocity.y -= 9.8 * deltaTime;  // Gravity
