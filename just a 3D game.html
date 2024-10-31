@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3D Game with WASD Movement and Collisions</title>
+  <title>3D Game with Gravity, Jumping, and Smooth Collisions</title>
   <style>
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
@@ -26,9 +26,23 @@
   light.position.set(1, 1, 1);
   scene.add(light);
 
+  // Floor
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(50, 50),
+    new THREE.MeshStandardMaterial({ color: 0x808080 })
+  );
+  floor.rotation.x = -Math.PI / 2;
+  scene.add(floor);
+
   // Player setup
-  const player = { speed: 0.1, velocity: new THREE.Vector3(), direction: new THREE.Vector3() };
-  camera.position.set(0, 1.6, 5); // Slightly above ground
+  const player = {
+    speed: 0.1,
+    jumpStrength: 0.2,
+    velocity: new THREE.Vector3(),
+    direction: new THREE.Vector3(),
+    canJump: false,
+  };
+  camera.position.set(0, 1.6, 5);
 
   // Create objects to collide with
   const objects = [];
@@ -42,30 +56,28 @@
     objects.push(box);
   }
 
-  // Floor
-  const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(50, 50),
-    new THREE.MeshStandardMaterial({ color: 0x808080 })
-  );
-  floor.rotation.x = -Math.PI / 2;
-  scene.add(floor);
-
   // Movement controls
   const keys = {};
-  window.addEventListener('keydown', (event) => { keys[event.key] = true; });
-  window.addEventListener('keyup', (event) => { keys[event.key] = false; });
+  window.addEventListener('keydown', (event) => {
+    keys[event.key.toLowerCase()] = true;
+    if (event.key === ' ') playerJump();
+  });
+  window.addEventListener('keyup', (event) => { keys[event.key.toLowerCase()] = false; });
 
   // Mouse look controls
   let isPointerLocked = false;
+  let pitch = 0;
+  let yaw = 0;
   document.body.addEventListener('click', () => {
     document.body.requestPointerLock();
   });
 
   document.addEventListener('mousemove', (event) => {
     if (isPointerLocked) {
-      camera.rotation.y -= event.movementX * 0.002;
-      camera.rotation.x -= event.movementY * 0.002;
-      camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
+      yaw -= event.movementX * 0.002;
+      pitch -= event.movementY * 0.002;
+      pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
+      camera.rotation.set(pitch, yaw, 0);
     }
   });
 
@@ -73,39 +85,57 @@
     isPointerLocked = !!document.pointerLockElement;
   });
 
-  // Update movement and collision
-  function updateMovement() {
-    player.direction.set(0, 0, 0);
+  // Jump function
+  function playerJump() {
+    if (player.canJump) {
+      player.velocity.y = player.jumpStrength;
+      player.canJump = false;
+    }
+  }
 
+  // Update movement and collision with sliding effect
+  function updateMovement(deltaTime) {
+    player.direction.set(0, 0, 0);
     if (keys['w']) player.direction.z -= 1;
     if (keys['s']) player.direction.z += 1;
     if (keys['a']) player.direction.x -= 1;
     if (keys['d']) player.direction.x += 1;
-
     player.direction.normalize();
+    
+    // Apply rotation and gravity
     player.direction.applyEuler(camera.rotation);
-    player.velocity.copy(player.direction).multiplyScalar(player.speed);
+    player.velocity.x = player.direction.x * player.speed;
+    player.velocity.z = player.direction.z * player.speed;
+    player.velocity.y -= 9.8 * deltaTime;  // Gravity
 
-    // Check collisions
-    const nextPosition = camera.position.clone().add(player.velocity);
-    let collision = false;
-
+    // Next position
+    const nextPosition = camera.position.clone().add(player.velocity.clone().multiplyScalar(deltaTime));
+    
+    // Check for collisions and slide if needed
+    player.canJump = false;
     for (const object of objects) {
-      const distance = object.position.distanceTo(nextPosition);
-      if (distance < 1) { // Adjust collision distance if needed
-        collision = true;
-        break;
+      const box = new THREE.Box3().setFromObject(object);
+      if (box.containsPoint(nextPosition)) {
+        // If colliding on Y axis, assume grounded and allow jumping
+        if (Math.abs(player.velocity.y) > Math.abs(player.velocity.x) || Math.abs(player.velocity.y) > Math.abs(player.velocity.z)) {
+          player.velocity.y = 0;
+          player.canJump = true;
+        } else {
+          // Slide along the obstacle surface
+          player.velocity.x = 0;
+          player.velocity.z = 0;
+        }
       }
     }
-
-    if (!collision) camera.position.add(player.velocity);
+    camera.position.add(player.velocity.clone().multiplyScalar(deltaTime));
   }
 
   // Animation loop
   function animate() {
-    requestAnimationFrame(animate);
-    updateMovement();
+    const deltaTime = 0.016; // Assuming ~60 FPS
+    updateMovement(deltaTime);
     renderer.render(scene, camera);
+    requestAnimationFrame(animate);
   }
 
   animate();
