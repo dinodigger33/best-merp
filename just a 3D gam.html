@@ -42,8 +42,8 @@
 
   // Player setup
   const player = {
-    speed: 3,
-    jumpStrength: 5,
+    speed: 5, // Increase speed for faster movement
+    jumpStrength: 10,
     velocity: new THREE.Vector3(),
     direction: new THREE.Vector3(),
     canJump: false,
@@ -53,10 +53,10 @@
   const objects = [];
   for (let i = 0; i < 10; i++) {
     const box = new THREE.Mesh(
-      new THREE.BoxGeometry(1, 1, 1),
+      new THREE.BoxGeometry(1, 2, 1), // Player is twice the height of blocks
       new THREE.MeshStandardMaterial({ color: Math.random() * 0xffffff })
     );
-    box.position.set(Math.random() * 20 - 10, 0.5, Math.random() * 20 - 10); // Position boxes half-unit off ground
+    box.position.set(Math.random() * 20 - 10, 1, Math.random() * 20 - 10); // Adjust box height to half its height
     scene.add(box);
     objects.push(box);
   }
