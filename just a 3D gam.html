@@ -17,7 +17,7 @@
   try {
     // Scene setup
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x87CEEB); // Light blue sky color
+    scene.background = new THREE.Color(0x87CEEB); // Light blue sky color for contrast
 
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -25,7 +25,7 @@
 
     // Lighting setup
     const light = new THREE.DirectionalLight(0xffffff, 0.8);
-    light.position.set(1, 1, 1);
+    light.position.set(1, 1, 1).normalize();
     scene.add(light);
 
     // Floor setup
@@ -36,23 +36,31 @@
     floor.rotation.x = -Math.PI / 2;
     scene.add(floor);
 
-    // Camera setup with container
+    // Camera setup within a container for movement
     const cameraContainer = new THREE.Object3D();
     scene.add(cameraContainer);
+
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 2, 10);  // Camera initially positioned 10 units back
+    camera.position.set(0, 2, 10); // Initial camera position back from the scene
     cameraContainer.add(camera);
 
     // Debugging statement
     console.log("Scene, renderer, and camera setup completed.");
 
-    // Simple cube object for visual reference
+    // Basic red cube for a visual reference in front of the camera
     const cube = new THREE.Mesh(
       new THREE.BoxGeometry(1, 1, 1),
       new THREE.MeshStandardMaterial({ color: 0xff0000 })
     );
-    cube.position.set(0, 0.5, -5); // Position cube slightly in front of the camera
+    cube.position.set(0, 0.5, -5); // Positioned 5 units in front of the camera
     scene.add(cube);
+
+    // Resize handler
+    window.addEventListener('resize', () => {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+    });
 
     // Animation loop
     function animate() {
@@ -61,13 +69,6 @@
     }
 
     animate();
-
-    // Resize handler
-    window.addEventListener('resize', () => {
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-    });
 
     // Final log for successful execution
     console.log("Render loop initiated successfully.");
