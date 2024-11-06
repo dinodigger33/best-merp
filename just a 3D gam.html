@@ -25,7 +25,7 @@
   light.position.set(1, 1, 1);
   scene.add(light);
 
-  // Floor (collidable)
+  // Floor setup
   const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(100, 100),
     new THREE.MeshStandardMaterial({ color: 0x808080 })
@@ -33,7 +33,7 @@
   floor.rotation.x = -Math.PI / 2;
   scene.add(floor);
 
-  // Camera setup with a container
+  // Camera setup with container
   const cameraContainer = new THREE.Object3D();
   scene.add(cameraContainer);
   const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -42,17 +42,17 @@
 
   // Player setup with physics properties
   const player = {
-    speed: 5,            // Movement speed
-    maxSpeed: 20,        // Maximum speed
-    airControl: 0.2,     // Control factor in the air
-    jumpStrength: 10,
+    speed: 10,            // Higher speed for faster movement
+    maxSpeed: 15,         // Limit speed for a fast-paced feel
+    airControl: 0.4,      // Control factor in the air
+    jumpStrength: 8,
     velocity: new THREE.Vector3(),
     acceleration: new THREE.Vector3(),
     direction: new THREE.Vector3(),
     canJump: false,
   };
 
-  // Create objects to collide with (obstacles)
+  // Obstacle objects
   const objects = [];
   for (let i = 0; i < 10; i++) {
     const box = new THREE.Mesh(
@@ -87,9 +87,9 @@
     if (isPointerLocked) {
       yaw -= event.movementX * 0.002;
       pitch -= event.movementY * 0.002;
-      pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch)); // Constrain pitch to avoid flipping
-      cameraContainer.rotation.y = yaw; // Rotate the container horizontally
-      camera.rotation.x = pitch;       // Rotate the camera vertically
+      pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
+      cameraContainer.rotation.y = yaw;
+      camera.rotation.x = pitch;
     }
   });
 
@@ -164,7 +164,7 @@
 
   // Animation loop
   function animate() {
-    const deltaTime = 0.016; // Assuming ~60 FPS
+    const deltaTime = 0.016;
     updateMovement(deltaTime);
     renderer.render(scene, camera);
     requestAnimationFrame(animate);
