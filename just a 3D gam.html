@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3D Game with Fixed Camera Yaw and Pitch</title>
+  <title>3D Fast-Paced Runner Game</title>
   <style>
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
@@ -21,7 +21,7 @@
   document.body.appendChild(renderer.domElement);
 
   // Lighting
-  const light = new THREE.DirectionalLight(0xffffff, 0.5);
+  const light = new THREE.DirectionalLight(0xffffff, 0.8);
   light.position.set(1, 1, 1);
   scene.add(light);
 
@@ -37,26 +37,29 @@
   const cameraContainer = new THREE.Object3D();
   scene.add(cameraContainer);
   const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.set(0, 2, 0);  // Set camera height to 2 units
+  camera.position.set(0, 2, 0);  // Camera height 2 units above the ground
   cameraContainer.add(camera);
 
-  // Player setup
+  // Player setup with physics properties
   const player = {
-    speed: 5, // Increase speed for faster movement
+    speed: 5,            // Movement speed
+    maxSpeed: 20,        // Maximum speed
+    airControl: 0.2,     // Control factor in the air
     jumpStrength: 10,
     velocity: new THREE.Vector3(),
+    acceleration: new THREE.Vector3(),
     direction: new THREE.Vector3(),
     canJump: false,
   };
 
-  // Create objects to collide with
+  // Create objects to collide with (obstacles)
   const objects = [];
   for (let i = 0; i < 10; i++) {
     const box = new THREE.Mesh(
-      new THREE.BoxGeometry(1, 2, 1), // Player is twice the height of blocks
+      new THREE.BoxGeometry(1, 2, 1),
       new THREE.MeshStandardMaterial({ color: Math.random() * 0xffffff })
     );
-    box.position.set(Math.random() * 20 - 10, 1, Math.random() * 20 - 10); // Adjust box height to half its height
+    box.position.set(Math.random() * 20 - 10, 1, Math.random() * 20 - 10);
     scene.add(box);
     objects.push(box);
   }
@@ -102,30 +105,41 @@
     }
   }
 
-  // Update movement and collision with sliding effect
+  // Update movement and physics
   function updateMovement(deltaTime) {
+    // Determine movement direction based on keys
     player.direction.set(0, 0, 0);
     if (keys['w']) player.direction.z -= 1;
     if (keys['s']) player.direction.z += 1;
     if (keys['a']) player.direction.x -= 1;
     if (keys['d']) player.direction.x += 1;
     player.direction.normalize();
-    
-    // Apply rotation and gravity
-    player.direction.applyEuler(new THREE.Euler(0, yaw, 0)); // Move relative to yaw only
-    player.velocity.x = player.direction.x * player.speed;
-    player.velocity.z = player.direction.z * player.speed;
-    player.velocity.y -= 9.8 * deltaTime;  // Gravity
 
-    // Next position
+    // Apply rotation to movement direction based on yaw
+    player.direction.applyEuler(new THREE.Euler(0, yaw, 0));
+
+    // Update acceleration based on grounded or airborne state
+    if (player.canJump) {
+      // Ground movement
+      player.acceleration.copy(player.direction).multiplyScalar(player.speed);
+    } else {
+      // Air movement (reduced control)
+      player.acceleration.copy(player.direction).multiplyScalar(player.speed * player.airControl);
+    }
+
+    // Apply gravity and drag
+    player.velocity.add(player.acceleration.multiplyScalar(deltaTime));
+    player.velocity.y -= 9.8 * deltaTime; // Gravity
+    player.velocity.clampLength(0, player.maxSpeed); // Limit speed
+
+    // Compute next position and check for collisions
     const nextPosition = cameraContainer.position.clone().add(player.velocity.clone().multiplyScalar(deltaTime));
-    
-    // Check for collisions with objects and floor
     player.canJump = false;
+
+    // Check collisions with objects
     for (const object of objects) {
       const box = new THREE.Box3().setFromObject(object);
       if (box.containsPoint(nextPosition)) {
-        // Slide along the obstacle surface
         if (Math.abs(player.velocity.x) > Math.abs(player.velocity.y) && Math.abs(player.velocity.x) > Math.abs(player.velocity.z)) {
           player.velocity.x = 0;
         } else if (Math.abs(player.velocity.z) > Math.abs(player.velocity.x) && Math.abs(player.velocity.z) > Math.abs(player.velocity.y)) {
@@ -137,33 +151,14 @@
       }
     }
 
-    // Check for collision with floor
-    if (nextPosition.y < floorBox.max.y + 2) { // Adjust collision distance as needed
-      nextPosition.y = floorBox.max.y + 2; // Keep player above the floor
+    // Check collision with floor
+    if (nextPosition.y < floorBox.max.y + 2) {
+      nextPosition.y = floorBox.max.y + 2;
       player.velocity.y = 0;
       player.canJump = true;
     }
 
+    // Apply new position
     cameraContainer.position.copy(nextPosition);
   }
 
-  // Animation loop
-  function animate() {
-    const deltaTime = 0.016; // Assuming ~60 FPS
-    updateMovement(deltaTime);
-    renderer.render(scene, camera);
-    requestAnimationFrame(animate);
-  }
-
-  animate();
-
-  // Handle resizing
-  window.addEventListener('resize', () => {
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-  });
-</script>
-
-</body>
-</html>
