@@ -162,3 +162,23 @@
     cameraContainer.position.copy(nextPosition);
   }
 
+  // Animation loop
+  function animate() {
+    const deltaTime = 0.016; // Assuming ~60 FPS
+    updateMovement(deltaTime);
+    renderer.render(scene, camera);
+    requestAnimationFrame(animate);
+  }
+
+  animate();
+
+  // Handle resizing
+  window.addEventListener('resize', () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+  });
+</script>
+
+</body>
+</html>
