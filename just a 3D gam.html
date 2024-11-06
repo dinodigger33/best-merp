@@ -14,170 +14,66 @@
 <script type="module">
   import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.module.js';
 
-  // Scene setup
-  const scene = new THREE.Scene();
-  const renderer = new THREE.WebGLRenderer();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);
+  try {
+    // Scene setup
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87CEEB); // Light blue sky color
 
-  // Lighting
-  const light = new THREE.DirectionalLight(0xffffff, 0.8);
-  light.position.set(1, 1, 1);
-  scene.add(light);
-
-  // Floor setup
-  const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(100, 100),
-    new THREE.MeshStandardMaterial({ color: 0x808080 })
-  );
-  floor.rotation.x = -Math.PI / 2;
-  scene.add(floor);
-
-  // Camera setup with container
-  const cameraContainer = new THREE.Object3D();
-  scene.add(cameraContainer);
-  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.set(0, 2, 0);  // Camera height 2 units above the ground
-  cameraContainer.add(camera);
-
-  // Player setup with physics properties
-  const player = {
-    speed: 10,            // Higher speed for faster movement
-    maxSpeed: 15,         // Limit speed for a fast-paced feel
-    airControl: 0.4,      // Control factor in the air
-    jumpStrength: 8,
-    velocity: new THREE.Vector3(),
-    acceleration: new THREE.Vector3(),
-    direction: new THREE.Vector3(),
-    canJump: false,
-  };
-
-  // Obstacle objects
-  const objects = [];
-  for (let i = 0; i < 10; i++) {
-    const box = new THREE.Mesh(
-      new THREE.BoxGeometry(1, 2, 1),
-      new THREE.MeshStandardMaterial({ color: Math.random() * 0xffffff })
-    );
-    box.position.set(Math.random() * 20 - 10, 1, Math.random() * 20 - 10);
-    scene.add(box);
-    objects.push(box);
-  }
-
-  // Floor bounding box for collision detection
-  const floorBox = new THREE.Box3().setFromObject(floor);
-
-  // Movement controls
-  const keys = {};
-  window.addEventListener('keydown', (event) => {
-    keys[event.key.toLowerCase()] = true;
-    if (event.key === ' ') playerJump();
-  });
-  window.addEventListener('keyup', (event) => { keys[event.key.toLowerCase()] = false; });
-
-  // Mouse look controls
-  let isPointerLocked = false;
-  let pitch = 0;
-  let yaw = 0;
-  document.body.addEventListener('click', () => {
-    document.body.requestPointerLock();
-  });
-
-  document.addEventListener('mousemove', (event) => {
-    if (isPointerLocked) {
-      yaw -= event.movementX * 0.002;
-      pitch -= event.movementY * 0.002;
-      pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
-      cameraContainer.rotation.y = yaw;
-      camera.rotation.x = pitch;
-    }
-  });
-
-  document.addEventListener('pointerlockchange', () => {
-    isPointerLocked = !!document.pointerLockElement;
-  });
-
-  // Jump function
-  function playerJump() {
-    if (player.canJump) {
-      player.velocity.y = player.jumpStrength;
-      player.canJump = false;
-    }
-  }
-
-  // Update movement and physics
-  function updateMovement(deltaTime) {
-    // Determine movement direction based on keys
-    player.direction.set(0, 0, 0);
-    if (keys['w']) player.direction.z -= 1;
-    if (keys['s']) player.direction.z += 1;
-    if (keys['a']) player.direction.x -= 1;
-    if (keys['d']) player.direction.x += 1;
-    player.direction.normalize();
-
-    // Apply rotation to movement direction based on yaw
-    player.direction.applyEuler(new THREE.Euler(0, yaw, 0));
-
-    // Update acceleration based on grounded or airborne state
-    if (player.canJump) {
-      // Ground movement
-      player.acceleration.copy(player.direction).multiplyScalar(player.speed);
-    } else {
-      // Air movement (reduced control)
-      player.acceleration.copy(player.direction).multiplyScalar(player.speed * player.airControl);
-    }
-
-    // Apply gravity and drag
-    player.velocity.add(player.acceleration.multiplyScalar(deltaTime));
-    player.velocity.y -= 9.8 * deltaTime; // Gravity
-    player.velocity.clampLength(0, player.maxSpeed); // Limit speed
-
-    // Compute next position and check for collisions
-    const nextPosition = cameraContainer.position.clone().add(player.velocity.clone().multiplyScalar(deltaTime));
-    player.canJump = false;
-
-    // Check collisions with objects
-    for (const object of objects) {
-      const box = new THREE.Box3().setFromObject(object);
-      if (box.containsPoint(nextPosition)) {
-        if (Math.abs(player.velocity.x) > Math.abs(player.velocity.y) && Math.abs(player.velocity.x) > Math.abs(player.velocity.z)) {
-          player.velocity.x = 0;
-        } else if (Math.abs(player.velocity.z) > Math.abs(player.velocity.x) && Math.abs(player.velocity.z) > Math.abs(player.velocity.y)) {
-          player.velocity.z = 0;
-        } else {
-          player.velocity.y = 0;
-          player.canJump = true;
-        }
-      }
-    }
-
-    // Check collision with floor
-    if (nextPosition.y < floorBox.max.y + 2) {
-      nextPosition.y = floorBox.max.y + 2;
-      player.velocity.y = 0;
-      player.canJump = true;
-    }
-
-    // Apply new position
-    cameraContainer.position.copy(nextPosition);
-  }
-
-  // Animation loop
-  function animate() {
-    const deltaTime = 0.016;
-    updateMovement(deltaTime);
-    renderer.render(scene, camera);
-    requestAnimationFrame(animate);
-  }
-
-  animate();
-
-  // Handle resizing
-  window.addEventListener('resize', () => {
+    const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-  });
+    document.body.appendChild(renderer.domElement);
+
+    // Lighting setup
+    const light = new THREE.DirectionalLight(0xffffff, 0.8);
+    light.position.set(1, 1, 1);
+    scene.add(light);
+
+    // Floor setup
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(100, 100),
+      new THREE.MeshStandardMaterial({ color: 0x808080 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    scene.add(floor);
+
+    // Camera setup with container
+    const cameraContainer = new THREE.Object3D();
+    scene.add(cameraContainer);
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 2, 10);  // Camera initially positioned 10 units back
+    cameraContainer.add(camera);
+
+    // Debugging statement
+    console.log("Scene, renderer, and camera setup completed.");
+
+    // Simple cube object for visual reference
+    const cube = new THREE.Mesh(
+      new THREE.BoxGeometry(1, 1, 1),
+      new THREE.MeshStandardMaterial({ color: 0xff0000 })
+    );
+    cube.position.set(0, 0.5, -5); // Position cube slightly in front of the camera
+    scene.add(cube);
+
+    // Animation loop
+    function animate() {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // Resize handler
+    window.addEventListener('resize', () => {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+    });
+
+    // Final log for successful execution
+    console.log("Render loop initiated successfully.");
+  } catch (error) {
+    console.error("An error occurred:", error);
+  }
 </script>
 
 </body>
