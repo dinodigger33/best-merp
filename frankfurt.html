@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Load Video from URL</title>
+</head>
+<body>
+  <div id="video-container"></div>
+
+  <script>
+    // URL of the video you want to display
+    const videoUrl = 'https://sample.com/sample_video.mp4';
+
+    // Create a new video element
+    const video = document.createElement('video');
+    video.controls = false; // Adds play/pause controls
+    video.width = 800; // Sets the width
+    video.src = videoUrl; // Sets the source of the video
+
+    // Optional: Add error handling in case the video fails to load
+    video.onerror = () => {
+      alert("Failed to load the video. Please check the URL and try again.");
+    };
+
+    // Append the video to the container
+    document.getElementById('video-container').appendChild(video);
+  </script>
+</body>
+</html>
