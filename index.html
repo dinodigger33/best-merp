@@ -59,18 +59,27 @@
         }
 
         // Send a new message
-        async function sendMessage() {
-            const message = document.getElementById('messageInput').value;
-            if (username && message) {
-                await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, message })
-                });
-                document.getElementById('messageInput').value = ''; // Clear input
-                loadMessages(); // Reload messages
-            }
+async function sendMessage() {
+    const message = document.getElementById('messageInput').value;
+    if (username && message) {
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, message })
+            });
+            const result = await response.json();
+            console.log("Message sent successfully:", result); // Debug message
+            document.getElementById('messageInput').value = ''; // Clear input
+            loadMessages(); // Reload messages
+        } catch (error) {
+            console.error("Error sending message:", error); // Log any errors
         }
+    } else {
+        console.warn("Username or message is missing!"); // Log if missing input
+    }
+}
+
 
         // Load messages initially and every 5 seconds
         loadMessages();
