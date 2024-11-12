@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Chat App</title>
+</head>
+<body>
+    <h1>Chat Room</h1>
+    <div id="chatBox"></div>
+    <input type="text" id="usernameInput" placeholder="Enter your name">
+    <input type="text" id="messageInput" placeholder="Type your message">
+    <button onclick="sendMessage()">Send</button>
+
+    <script>
+        const apiUrl = 'https://script.google.com/macros/s/AKfycbzzOFLXfVdPlDGguHmEmT8_g1SydtCr6l9k1CXFLbuUrrXxBwr_eQuUKMw3MVZotSXc/exec'; // Replace with your Google Apps Script URL
+
+        // Fetch and display messages
+        async function loadMessages() {
+            const response = await fetch(apiUrl);
+            const messages = await response.json();
+            const chatBox = document.getElementById('chatBox');
+            chatBox.innerHTML = '';
+            messages.forEach(([timestamp, username, message]) => {
+                const messageDiv = document.createElement('div');
+                messageDiv.textContent = `${username}: ${message} (${new Date(timestamp).toLocaleString()})`;
+                chatBox.appendChild(messageDiv);
+            });
+        }
+
+        // Send a new message
+        async function sendMessage() {
+            const username = document.getElementById('usernameInput').value;
+            const message = document.getElementById('messageInput').value;
+
+            if (username && message) {
+                await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, message })
+                });
+                document.getElementById('messageInput').value = ''; // Clear input
+                loadMessages(); // Reload messages
+            }
+        }
+
+        // Load messages initially and every 5 seconds
+        loadMessages();
+        setInterval(loadMessages, 5000);
+    </script>
+</body>
+</html>
