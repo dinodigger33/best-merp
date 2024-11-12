@@ -4,16 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple Chat App</title>
+    <style>
+        #chatBox {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        #usernameButton {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+        }
+    </style>
 </head>
 <body>
     <h1>Chat Room</h1>
     <div id="chatBox"></div>
-    <input type="text" id="usernameInput" placeholder="Enter your name">
     <input type="text" id="messageInput" placeholder="Type your message">
     <button onclick="sendMessage()">Send</button>
 
+    <!-- Button to change username -->
+    <button id="usernameButton" onclick="setUsername()">Change Username</button>
+
     <script>
-        const apiUrl = 'https://script.google.com/macros/s/AKfycbzzOFLXfVdPlDGguHmEmT8_g1SydtCr6l9k1CXFLbuUrrXxBwr_eQuUKMw3MVZotSXc/exec'; // Replace with your Google Apps Script URL
+        const apiUrl = 'YOUR_DEPLOYED_APP_URL_HERE'; // Replace with your Google Apps Script URL
+        let username = '';
+
+        // Prompt user to set initial username
+        function setUsername() {
+            username = prompt('Please enter your name:');
+            if (!username) {
+                username = 'Anonymous'; // Default if no name is entered
+            }
+        }
+
+        // Prompt for the username at the beginning
+        setUsername();
 
         // Fetch and display messages
         async function loadMessages() {
@@ -21,18 +49,18 @@
             const messages = await response.json();
             const chatBox = document.getElementById('chatBox');
             chatBox.innerHTML = '';
-            messages.forEach(([timestamp, username, message]) => {
+
+            messages.forEach(([timestamp, sender, message]) => {
                 const messageDiv = document.createElement('div');
-                messageDiv.textContent = `${username}: ${message} (${new Date(timestamp).toLocaleString()})`;
+                const date = new Date(timestamp).toLocaleString(); // Convert to readable date
+                messageDiv.textContent = `${sender}: ${message} (${date})`;
                 chatBox.appendChild(messageDiv);
             });
         }
 
         // Send a new message
         async function sendMessage() {
-            const username = document.getElementById('usernameInput').value;
             const message = document.getElementById('messageInput').value;
-
             if (username && message) {
                 await fetch(apiUrl, {
                     method: 'POST',
