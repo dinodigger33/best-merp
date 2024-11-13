@@ -62,24 +62,24 @@
 async function sendMessage() {
     const message = document.getElementById('messageInput').value;
     if (username && message) {
-        try {
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, message })
-            });
-            const result = await response.json();
-            console.log("Message sent successfully:", result); // Debug message
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, message })
+        });
+
+        // Check if the response is OK (status 200) and log any issues
+        if (response.ok) {
+            console.log("Message sent successfully");
             document.getElementById('messageInput').value = ''; // Clear input
             loadMessages(); // Reload messages
-        } catch (error) {
-            console.error("Error sending message:", error); // Log any errors
+        } else {
+            console.error("Error response from server:", response.status);
         }
     } else {
-        console.warn("Username or message is missing!"); // Log if missing input
+        console.warn("Username or message is missing!");
     }
 }
-
 
         // Load messages initially and every 5 seconds
         loadMessages();
