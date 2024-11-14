@@ -3,21 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Chat App</title>
-    <style>
-        #chatBox {
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-bottom: 10px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        #usernameButton {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-        }
-    </style>
+    <title>Chat with Google Forms</title>
 </head>
 <body>
     <h1>Chat Room</h1>
@@ -25,61 +11,50 @@
     <input type="text" id="messageInput" placeholder="Type your message">
     <button onclick="sendMessage()">Send</button>
 
-    <!-- Button to change username -->
-    <button id="usernameButton" onclick="setUsername()">Change Username</button>
-
     <script>
-        const apiUrl = 'https://script.google.com/macros/s/AKfycbyTdP6mWBlUUD1JyKKPP2NVb_pi1OoIALzAJaqqMT_Y3w53muK_3MJJQLZOD47RGNJt/exec'; // Replace with your Google Apps Script URL
-        let username = '';
+        // Prompt user for their username
+        let username = prompt("Enter your name:");
+        if (!username) username = "Anonymous";  // Default to "Anonymous" if no username provided
 
-        // Prompt user to set initial username
-        function setUsername() {
-            username = prompt('Please enter your name:');
-            if (!username) {
-                username = 'Anonymous'; // Default if no name is entered
+        const formUrl = 'https://docs.google.com/forms/d/e/FORM_ID/viewform?usp=pp_url&entry.FORM_FIELD_ID1=username&entry.FORM_FIELD_ID2=message';
+        
+        // Replace FORM_ID, FORM_FIELD_ID1, and FORM_FIELD_ID2 with your actual values
+
+        // Send message function
+        async function sendMessage() {
+            const message = document.getElementById('messageInput').value;
+            if (message) {
+                const url = 'https://docs.google.com/forms/d/e/1FAIpQLSe3f4l1NrSdrmpIIfvOk11b-wXN2Li1p1n3l_BwQakEU3KuHw/viewform?usp=pp_url&entry.281199935=null&entry.1532675626=text'
+                    .replace('username', encodeURIComponent(username))
+                    .replace('message', encodeURIComponent(message));
+
+                try {
+                    await fetch(url, { method: 'POST', mode: 'no-cors' });
+                    document.getElementById('messageInput').value = ''; // Clear input
+                    loadMessages(); // Optionally, load messages if you want to display them
+                    console.log("Message sent successfully");
+                } catch (error) {
+                    alert("Error sending message:", error);
+                }
             }
         }
 
-        // Prompt for the username at the beginning
-        setUsername();
-
-        // Fetch and display messages
+        // Load messages function (optional)
         async function loadMessages() {
-            const response = await fetch(apiUrl);
-            const messages = await response.json();
+            const response = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vQeiM-XS-mv2Bxhi50cAb0nftN2liIhnKEmlM4g9qNct0WZ1MHlUpv2DEjXj-A20EnndUKZ2kdcvi13/pub?output=csv');
+            const data = await response.json();
+            const rows = data.values || [];
+
             const chatBox = document.getElementById('chatBox');
             chatBox.innerHTML = '';
-
-            messages.forEach(([timestamp, sender, message]) => {
+            rows.slice(1).forEach(row => {
+                const [timestamp, sender, message] = row;
                 const messageDiv = document.createElement('div');
-                const date = new Date(timestamp).toLocaleString(); // Convert to readable date
+                const date = new Date(timestamp).toLocaleString();
                 messageDiv.textContent = `${sender}: ${message} (${date})`;
                 chatBox.appendChild(messageDiv);
             });
         }
-
-        // Send a new message
-async function sendMessage() {
-    const message = document.getElementById('messageInput').value;
-    if (username && message) {
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, message })
-        });
-
-        // Check if the response is OK (status 200) and log any issues
-        if (response.ok) {
-            console.log("Message sent successfully");
-            document.getElementById('messageInput').value = ''; // Clear input
-            loadMessages(); // Reload messages
-        } else {
-            console.error("Error response from server:", response.status);
-        }
-    } else {
-        console.warn("Username or message is missing!");
-    }
-}
 
         // Load messages initially and every 5 seconds
         loadMessages();
