@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>First-Person Runner Game</title>
+  <title>Maze Runner Game</title>
   <style>
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
@@ -22,12 +22,12 @@
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
 
-  // Lighting setup
+  // Lighting
   const light = new THREE.DirectionalLight(0xffffff, 0.8);
   light.position.set(1, 1, 1).normalize();
   scene.add(light);
 
-  // Floor setup
+  // Floor
   const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(100, 100),
     new THREE.MeshStandardMaterial({ color: 0x808080 })
@@ -35,7 +35,7 @@
   floor.rotation.x = -Math.PI / 2;
   scene.add(floor);
 
-  // Camera setup with yaw and pitch containers
+  // Camera setup
   const yawContainer = new THREE.Object3D();
   scene.add(yawContainer);
   const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -54,36 +54,36 @@
     position: new THREE.Vector3(0, 2, 0),
   };
 
-  // Mouse control variables
+  // Mouse controls
   let isPointerLocked = false;
   let yaw = 0;
   let pitch = 0;
 
-  // Pointer lock setup
+  // Pointer lock
   document.body.addEventListener('click', () => {
     document.body.requestPointerLock();
   });
 
-  // Mouse look controls
   document.addEventListener('mousemove', (event) => {
     if (document.pointerLockElement === document.body) {
       yaw -= event.movementX * 0.002;
       pitch -= event.movementY * 0.002;
       pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch)); // Clamp pitch
-      yawContainer.rotation.y = yaw; // Yaw applied to container
-      camera.rotation.x = pitch;    // Pitch applied to camera
+      yawContainer.rotation.y = yaw;
+      camera.rotation.x = pitch;
     }
   });
 
-  // Key states for movement
+  // Movement keys
   const keys = {};
   window.addEventListener('keydown', (event) => {
     keys[event.key.toLowerCase()] = true;
     if (event.key === ' ') playerJump();
   });
-  window.addEventListener('keyup', (event) => { keys[event.key.toLowerCase()] = false; });
+  window.addEventListener('keyup', (event) => {
+    keys[event.key.toLowerCase()] = false;
+  });
 
-  // Jump function
   function playerJump() {
     if (player.canJump) {
       player.velocity.y = player.jumpStrength;
@@ -91,7 +91,37 @@
     }
   }
 
-  // Update movement and momentum handling
+  // Maze generation
+  const mazeData = [
+    // Define the maze as a grid (1: wall, 0: free space)
+    [1, 1, 1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 1, 0, 1],
+    [1, 0, 1, 0, 1, 0, 1],
+    [1, 0, 1, 0, 0, 0, 1],
+    [1, 0, 1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 0, 0, 1],
+    [1, 1, 1, 1, 1, 1, 1],
+  ];
+
+  const mazeSize = 7;
+  const wallSize = 2;
+  const walls = [];
+
+  mazeData.forEach((row, z) => {
+    row.forEach((cell, x) => {
+      if (cell === 1) {
+        const wall = new THREE.Mesh(
+          new THREE.BoxGeometry(wallSize, wallSize, wallSize),
+          new THREE.MeshStandardMaterial({ color: 0x555555 })
+        );
+        wall.position.set(x * wallSize, wallSize / 2, z * wallSize);
+        scene.add(wall);
+        walls.push(wall);
+      }
+    });
+  });
+
+  // Update movement and collision
   function updateMovement(deltaTime) {
     const direction = new THREE.Vector3();
     if (keys['w']) direction.z -= 1;
@@ -100,50 +130,57 @@
     if (keys['d']) direction.x += 1;
     direction.normalize();
 
-    // Convert movement direction to world coordinates and apply yaw rotation
+    // Apply yaw rotation to movement direction
     if (direction.length() > 0) {
-      direction.applyEuler(new THREE.Euler(0, yaw, 0)); // Rotate movement direction based on yaw
-
-      // Accelerate player in the direction they're facing
+      direction.applyEuler(new THREE.Euler(0, yaw, 0));
       player.velocity.x += direction.x * player.acceleration * deltaTime;
       player.velocity.z += direction.z * player.acceleration * deltaTime;
 
-      // Limit player speed
+      // Limit speed
       player.velocity.x = Math.min(Math.max(player.velocity.x, -player.maxSpeed), player.maxSpeed);
       player.velocity.z = Math.min(Math.max(player.velocity.z, -player.maxSpeed), player.maxSpeed);
     } else {
-      // Apply deceleration when no input is provided
+      // Deceleration
       player.velocity.x *= player.deceleration;
       player.velocity.z *= player.deceleration;
     }
 
-    // Apply gravity
+    // Gravity
     player.velocity.y -= player.gravity * deltaTime;
 
-    // Update position based on velocity
+    // Calculate next position
     const nextPosition = player.position.clone().add(player.velocity.clone().multiplyScalar(deltaTime));
 
-    // Floor collision detection
-    if (nextPosition.y < floor.position.y + 2) { // Keep player above floor
-      nextPosition.y = floor.position.y + 2;
+    // Collision detection with maze walls
+    let collisionDetected = false;
+    for (const wall of walls) {
+      const wallBox = new THREE.Box3().setFromObject(wall);
+      const playerBox = new THREE.Box3().setFromCenterAndSize(
+        nextPosition.clone(),
+        new THREE.Vector3(1, 2, 1)
+      );
+      if (wallBox.intersectsBox(playerBox)) {
+        collisionDetected = true;
+        break;
+      }
+    }
+
+    // Apply collision response
+    if (collisionDetected) {
+      player.velocity.x = 0;
+      player.velocity.z = 0;
+    }
+
+    // Floor collision
+    if (nextPosition.y < 1) {
+      nextPosition.y = 1;
       player.velocity.y = 0;
       player.canJump = true;
     }
 
+    // Update position
     player.position.copy(nextPosition);
-    yawContainer.position.copy(player.position); // Sync camera container position with player position
-  }
-
-  // Create objects for collision testing
-  const objects = [];
-  for (let i = 0; i < 10; i++) {
-    const box = new THREE.Mesh(
-      new THREE.BoxGeometry(1, 1, 1),
-      new THREE.MeshStandardMaterial({ color: Math.random() * 0xffffff })
-    );
-    box.position.set(Math.random() * 20 - 10, 0.5, Math.random() * 20 - 10); // Positioned randomly
-    scene.add(box);
-    objects.push(box);
+    yawContainer.position.copy(player.position);
   }
 
   // Animation loop
