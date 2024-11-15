@@ -35,10 +35,12 @@
   floor.rotation.x = -Math.PI / 2;
   scene.add(floor);
 
-  // Camera setup
+  // Camera setup with yaw and pitch containers
+  const yawContainer = new THREE.Object3D();
+  scene.add(yawContainer);
   const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
   camera.position.set(0, 2, 0); // Set camera height
-  scene.add(camera);
+  yawContainer.add(camera);
 
   // Player setup
   const player = {
@@ -68,8 +70,8 @@
       yaw -= event.movementX * 0.002;
       pitch -= event.movementY * 0.002;
       pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch)); // Clamp pitch
-      camera.rotation.x = pitch;     // Pitch (vertical rotation)
-      camera.rotation.y = yaw;       // Yaw (horizontal rotation)
+      yawContainer.rotation.y = yaw; // Yaw applied to container
+      camera.rotation.x = pitch;    // Pitch applied to camera
     }
   });
 
@@ -98,7 +100,7 @@
     if (keys['d']) direction.x += 1;
     direction.normalize();
 
-    // Convert movement direction to world coordinates and apply camera yaw rotation
+    // Convert movement direction to world coordinates and apply yaw rotation
     if (direction.length() > 0) {
       direction.applyEuler(new THREE.Euler(0, yaw, 0)); // Rotate movement direction based on yaw
 
@@ -129,7 +131,7 @@
     }
 
     player.position.copy(nextPosition);
-    camera.position.copy(player.position); // Sync camera position with player position
+    yawContainer.position.copy(player.position); // Sync camera container position with player position
   }
 
   // Create objects for collision testing
