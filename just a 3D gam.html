@@ -45,11 +45,13 @@
 
   // Player setup
   const player = {
-    speed: 5,
-    jumpStrength: 7,
-    velocity: new THREE.Vector3(),
-    direction: new THREE.Vector3(),
+    maxSpeed: 10, // Increased for faster speed
+    acceleration: 20,
+    deceleration: 0.9, // Smooth stopping
+    jumpStrength: 8,
+    gravity: 9.8,
     canJump: false,
+    velocity: new THREE.Vector3(),
   };
 
   // Mouse control variables
@@ -89,27 +91,39 @@
     }
   }
 
-  // Movement and collision detection
+  // Update movement and momentum handling
   function updateMovement(deltaTime) {
-    player.direction.set(0, 0, 0);
+    const direction = new THREE.Vector3();
+    if (keys['w']) direction.z -= 1;
+    if (keys['s']) direction.z += 1;
+    if (keys['a']) direction.x -= 1;
+    if (keys['d']) direction.x += 1;
+    direction.normalize();
 
-    // Movement controls
-    if (keys['w']) player.direction.z -= 1;
-    if (keys['s']) player.direction.z += 1;
-    if (keys['a']) player.direction.x -= 1;
-    if (keys['d']) player.direction.x += 1;
-    player.direction.normalize();
+    // Convert movement direction to world coordinates and apply camera yaw rotation
+    if (direction.length() > 0) {
+      direction.applyEuler(new THREE.Euler(0, yaw, 0));
 
-    // Rotate movement direction to match camera yaw
-    player.direction.applyEuler(new THREE.Euler(0, yaw, 0));
-    player.velocity.x = player.direction.x * player.speed;
-    player.velocity.z = player.direction.z * player.speed;
-    player.velocity.y -= 9.8 * deltaTime; // Gravity
+      // Accelerate player in the direction they're facing
+      player.velocity.x += direction.x * player.acceleration * deltaTime;
+      player.velocity.z += direction.z * player.acceleration * deltaTime;
+      
+      // Limit player speed
+      player.velocity.x = Math.min(Math.max(player.velocity.x, -player.maxSpeed), player.maxSpeed);
+      player.velocity.z = Math.min(Math.max(player.velocity.z, -player.maxSpeed), player.maxSpeed);
+    } else {
+      // Apply deceleration when no input is provided
+      player.velocity.x *= player.deceleration;
+      player.velocity.z *= player.deceleration;
+    }
 
-    // Calculate next position
+    // Apply gravity
+    player.velocity.y -= player.gravity * deltaTime;
+
+    // Update position based on velocity
     const nextPosition = cameraContainer.position.clone().add(player.velocity.clone().multiplyScalar(deltaTime));
 
-    // Floor collision check
+    // Floor collision detection
     if (nextPosition.y < floor.position.y + 2) { // Adjust to keep player slightly above floor
       nextPosition.y = floor.position.y + 2;
       player.velocity.y = 0;
