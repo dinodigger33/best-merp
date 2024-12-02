@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Chat Module with Learning</title>
+  <title>Adaptive AI Chat Module</title>
   <style>
-    /* CSS Styling */
     body {
       font-family: Arial, sans-serif;
       margin: 0;
@@ -35,46 +34,65 @@
       margin: 5px 0;
     }
 
-    #user-input, #training-input, #training-response {
+    #user-input {
       width: calc(100% - 60px);
       padding: 10px;
-      margin-bottom: 10px;
     }
 
-    #send-btn, #train-btn, #export-btn {
+    #send-btn {
       padding: 10px;
-      margin-bottom: 10px;
     }
   </style>
 </head>
 <body>
   <div id="app">
-    <h1>AI Chat Module with Learning</h1>
-
-    <!-- Chat Interface -->
+    <h1>Adaptive AI Chat Module</h1>
     <div id="chatbox">
       <div id="messages"></div>
     </div>
     <input type="text" id="user-input" placeholder="Type your message...">
     <button id="send-btn">Send</button>
-
-    <!-- Training Interface -->
-    <h3>Train the AI</h3>
-    <input type="text" id="training-input" placeholder="Enter a user input...">
-    <input type="text" id="training-response" placeholder="Enter the AI response...">
-    <button id="train-btn">Train</button>
-    <button id="export-btn">Export Data</button>
   </div>
 
   <script>
-    // Initial AI responses (modifiable)
-    let aiResponses = {
-      hello: "Hi there! How can I help?",
-      bye: "Goodbye! Have a nice day!",
-      default: "I'm not sure how to respond to that."
+    // Load or initialize AI memory
+    let aiMemory = JSON.parse(localStorage.getItem('aiMemory')) || {
+      responses: {
+        hello: "Hi there! How can I help?",
+        bye: "Goodbye! Have a nice day!"
+      }
     };
 
-    // Handle sending messages
+    // Function to save memory persistently
+    function saveMemory() {
+      localStorage.setItem('aiMemory', JSON.stringify(aiMemory));
+    }
+
+    // Function to generate a response
+    function getAIResponse(input) {
+      input = input.toLowerCase();
+      const knownResponses = aiMemory.responses;
+
+      // Exact match response
+      if (knownResponses[input]) {
+        return knownResponses[input];
+      }
+
+      // Learn dynamically if unknown
+      const fallback = "I don't know how to respond to that. What should I say?";
+      aiMemory.lastInput = input; // Store the input for learning
+      saveMemory();
+      return fallback;
+    }
+
+    // Function to train the AI dynamically
+    function trainAI(input, response) {
+      aiMemory.responses[input] = response;
+      delete aiMemory.lastInput; // Clear last input
+      saveMemory();
+    }
+
+    // Chat interaction
     document.getElementById('send-btn').addEventListener('click', () => {
       const userInput = document.getElementById('user-input').value.trim();
       const messagesDiv = document.getElementById('messages');
@@ -87,50 +105,24 @@
       messagesDiv.appendChild(userMsg);
 
       // Generate AI response
-      const botResponse = aiResponses[userInput.toLowerCase()] || aiResponses.default;
+      const botResponse = getAIResponse(userInput);
 
       const botMsg = document.createElement('div');
       botMsg.textContent = `AI: ${botResponse}`;
       messagesDiv.appendChild(botMsg);
 
+      // If AI doesn't know the response, allow training
+      if (botResponse.includes("What should I say?")) {
+        const response = prompt("Teach the AI: How should it respond?");
+        if (response) {
+          trainAI(aiMemory.lastInput, response);
+          alert(`AI has learned to respond to "${aiMemory.lastInput}" with "${response}".`);
+        }
+      }
+
       // Clear input
       document.getElementById('user-input').value = '';
     });
-
-    // Handle training the AI
-    document.getElementById('train-btn').addEventListener('click', () => {
-      const trainingInput = document.getElementById('training-input').value.trim().toLowerCase();
-      const trainingResponse = document.getElementById('training-response').value.trim();
-
-      if (!trainingInput || !trainingResponse) {
-        alert("Please fill in both input and response fields.");
-        return;
-      }
-
-      // Add new input-response pair to AI responses
-      aiResponses[trainingInput] = trainingResponse;
-
-      alert(`Trained AI: "${trainingInput}" will now respond with "${trainingResponse}"`);
-      document.getElementById('training-input').value = '';
-      document.getElementById('training-response').value = '';
-    });
-
-    // Handle exporting AI data
-    document.getElementById('export-btn').addEventListener('click', () => {
-      const dataStr = JSON.stringify(aiResponses, null, 2);
-      const blob = new Blob([dataStr], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-
-      const downloadLink = document.createElement('a');
-      downloadLink.href = url;
-      downloadLink.download = 'ai_responses.json';
-      downloadLink.click();
-
-      alert("Exported AI data! Save the file and update the HTML file manually.");
-    });
-
-    // AI responses can be re-imported by pasting JSON data directly into this variable
-    // let aiResponses = { ... }; (manually replace this in your HTML file)
   </script>
 </body>
 </html>
