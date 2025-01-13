@@ -1,24 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+  <title>Counter Example</title>
 </head>
+
 <body>
-  <title id="ham">0</title>
   <button onclick="fun()">Click me</button>
   <p id="hamer">0</p>
+  <button onclick="auto()">Autoclicker</button>
 
   <script>
-    setInterval(() => {
-      let hamElement = document.getElementById("ham");
-      let hamValue = parseInt(hamElement.textContent);
-      hamElement.textContent = hamValue + 1;
-    }, 1000);
-
     function fun() {
       let hamerElement = document.getElementById("hamer");
       let hamerValue = parseInt(hamerElement.textContent);
       hamerElement.textContent = hamerValue + 1;
     }
+
+    let autoClickerInterval; // Variable to store the interval ID
+
+    function auto() {
+      if (!autoClickerInterval) { // Prevent multiple intervals
+        autoClickerInterval = setInterval(() => {
+          let hamerElement = document.getElementById("hamer");
+          let hamerValue = parseInt(hamerElement.textContent);
+          hamerElement.textContent = hamerValue + 1;
+        }, 1); // Increment every millisecond
+      }
+    }
   </script>
 </body>
+
 </html>
