@@ -1,34 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <title>Counter Example</title>
 </head>
-
 <body>
   <button onclick="fun()">Click me</button>
   <p id="hamer">0</p>
-  <button onclick="auto()">Autoclicker</button>
+  <button onclick="timeTrial()">Time trial</button>
 
   <script>
+    let clicks = 0;
+    let trialActive = false;
+    let trialTime = 0;
+    let countdownInterval;
+
     function fun() {
-      let hamerElement = document.getElementById("hamer");
-      let hamerValue = parseInt(hamerElement.textContent);
-      hamerElement.textContent = hamerValue + 1;
+      if (trialActive) {
+        clicks++;
+        document.getElementById("hamer").textContent = clicks;
+      }
     }
 
-    let autoClickerInterval; // Variable to store the interval ID
+    function timeTrial() {
+      if (trialActive) return; // Prevent multiple trials at once
+      
+      let seconds = prompt("Enter the number of seconds for the time trial:");
+      seconds = parseInt(seconds);
 
-    function auto() {
-      if (!autoClickerInterval) { // Prevent multiple intervals
-        autoClickerInterval = setInterval(() => {
-          let hamerElement = document.getElementById("hamer");
-          let hamerValue = parseInt(hamerElement.textContent);
-          hamerElement.textContent = hamerValue + 1;
-        }, 1); // Increment every millisecond
+      if (isNaN(seconds) || seconds <= 0) {
+        alert("Please enter a valid number of seconds.");
+        return;
       }
+
+      clicks = 0;
+      document.getElementById("hamer").textContent = clicks;
+      trialActive = true;
+      trialTime = seconds;
+
+      // Start a countdown display
+      countdownInterval = setInterval(() => {
+        document.getElementById("hamer").textContent = `Clicks: ${clicks} | Time left: ${trialTime}s`;
+        trialTime--;
+
+        if (trialTime < 0) {
+          clearInterval(countdownInterval);
+          trialActive = false;
+          alert(`Time's up! You clicked ${clicks} times in ${seconds} seconds.`);
+          document.getElementById("hamer").textContent = clicks; // Reset to final clicks
+        }
+      }, 1000);
     }
   </script>
 </body>
-
 </html>
