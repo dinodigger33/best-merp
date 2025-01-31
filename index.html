@@ -3,61 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat with Google Forms</title>
+    <title>Live Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        #chatBox {
+            width: 80%;
+            height: 300px;
+            border: 1px solid black;
+            overflow-y: scroll;
+            margin: auto;
+            padding: 10px;
+        }
+        #nameButton {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: blue;
+            color: white;
+            padding: 10px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-    <h1>Chat Room</h1>
+    <h1>Live Chat Room</h1>
     <div id="chatBox"></div>
     <input type="text" id="messageInput" placeholder="Type your message">
     <button onclick="sendMessage()">Send</button>
+    <button id="nameButton" onclick="changeName()">Change Name</button>
 
     <script>
-        // Prompt user for their username
-        let username = prompt("Enter your name:");
-        if (!username) username = "Anonymous";  // Default to "Anonymous" if no username provided
+        let username = localStorage.getItem("chatUsername") || prompt("Enter your name:");
+        if (!username) username = "Anonymous";
+        localStorage.setItem("chatUsername", username);
 
-        // Form URL with placeholders for username and message
-        const formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSe3f4l1NrSdrmpIIfvOk11b-wXN2Li1p1n3l_BwQakEU3KuHw/viewform?usp=pp_url&entry.281199935=username&entry.1532675626=message';
-        
-        // Send message function
-        async function sendMessage() {
-            const message = document.getElementById('messageInput').value;
-            if (message) {
-                const url = formUrl
-                    .replace('username', encodeURIComponent(username))
-                    .replace('message', encodeURIComponent(message));
+        const chatBox = document.getElementById("chatBox");
+        const ws = new WebSocket("wss://relay.websocket.in/v3/YOUR-UNIQUE-ROOM-ID?apiKey=YOUR_API_KEY"); 
 
-                try {
-                    await fetch(url, { method: 'POST', mode: 'no-cors' });
-                    document.getElementById('messageInput').value = ''; // Clear input
-                    loadMessages(); // Optionally, load messages if you want to display them
-                    console.log("Message sent successfully");
-                } catch (error) {
-                    alert("Error sending message:", error);
-                }
+        ws.onmessage = (event) => {
+            const message = JSON.parse(event.data);
+            displayMessage(message.username, message.text);
+        };
+
+        function sendMessage() {
+            const messageInput = document.getElementById("messageInput");
+            const messageText = messageInput.value.trim();
+            if (messageText) {
+                const message = { username, text: messageText };
+                ws.send(JSON.stringify(message)); 
+                displayMessage(username, messageText);
+                messageInput.value = "";
             }
         }
 
-        // Load messages function (optional)
-        async function loadMessages() {
-            const response = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vQeiM-XS-mv2Bxhi50cAb0nftN2liIhnKEmlM4g9qNct0WZ1MHlUpv2DEjXj-A20EnndUKZ2kdcvi13/pub?output=csv');
-            const text = await response.text();
-            const rows = text.split('\n').map(row => row.split(','));
-
-            const chatBox = document.getElementById('chatBox');
-            chatBox.innerHTML = '';
-            rows.slice(1).forEach(row => {
-                const [timestamp, sender, message] = row;
-                const messageDiv = document.createElement('div');
-                const date = new Date(timestamp).toLocaleString();
-                messageDiv.textContent = `${sender}: ${message} (${date})`;
-                chatBox.appendChild(messageDiv);
-            });
+        function displayMessage(sender, message) {
+            const messageDiv = document.createElement("div");
+            messageDiv.textContent = `${sender}: ${message}`;
+            chatBox.appendChild(messageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        // Load messages initially and every 5 seconds
-        loadMessages();
-        setInterval(loadMessages, 5000);
+        function changeName() {
+            username = prompt("Enter your new name:") || "Anonymous";
+            localStorage.setItem("chatUsername", username);
+        }
     </script>
 </body>
 </html>
