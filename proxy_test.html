@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unblocked Browser</title>
+</head>
+<body>
+    <input type="text" id="urlInput" placeholder="Enter URL here..." style="width: 300px;">
+    <button onclick="fetchAndDisplayPage()">Fetch and Display</button>
+    
+    <script>
+        async function fetchAndDisplayPage() {
+            let url = document.getElementById('urlInput').value;
+            if (!url) {
+                alert('Please enter a URL');
+                return;
+            }
+            
+            try {
+                let response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                let text = await response.text();
+                
+                let newTab = window.open('about:blank', '_blank');
+                if (newTab) {
+                    newTab.document.write(text);
+                    newTab.document.close();
+                } else {
+                    alert('Popup blocked! Please allow popups for this site.');
+                }
+            } catch (error) {
+                alert('Failed to fetch the page. It might be blocked or have security restrictions.');
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>
