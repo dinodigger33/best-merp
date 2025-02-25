@@ -2,27 +2,30 @@
 <html>
 <body>
 
-<p>Click the button to open a new window and close this one.</p>
-
-<button onclick="myFunction()">Try it</button>
-
 <script>
+  myFunction();
 function myFunction() {
   var myWindow = window.open("", "_blank", "width=800,height=600");
-  myWindow.document.write(`
-    <html>
-      <head>
-        <title>Embedded Game</title>
-      </head>
-      <body style="margin:0;">
-        <iframe src="https://www.hoodamath.com/mobile/games/snow-rider-3d/game.html?nocheckorient=1" 
-                width="100%" height="100%" style="border:none; position:fixed; top:0; left:0;" allowfullscreen></iframe>
-      </body>
-    </html>
-  `);
-  myWindow.document.close(); // Close document to complete writing
+  
+  if (myWindow) {
+    myWindow.document.write(`
+      <html>
+        <head>
+          <title>Embedded Game</title>
+        </head>
+        <body style="margin:0;">
+          <iframe src="https://www.hoodamath.com/mobile/games/snow-rider-3d/game.html?nocheckorient=1" 
+                  width="100%" height="100%" style="border:none; position:fixed; top:0; left:0;" allowfullscreen></iframe>
+        </body>
+      </html>
+    `);
+    myWindow.document.close();
 
-  window.close(); // Close the original window
+    // Close the original window (works only if opened via JavaScript)
+    window.open('', '_self').close();
+  } else {
+    alert("Pop-ups are blocked! Allow pop-ups and try again.");
+  }
 }
 </script>
 
