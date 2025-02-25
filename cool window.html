@@ -5,13 +5,13 @@
 <script>
   myFunction();
 function myFunction() {
-  var myWindow = window.open("", "_blank", "width=800,height=600");
+  var myWindow = window.open("", "_blank", "width=400,height=400");
   
   if (myWindow) {
     myWindow.document.write(`
       <html>
         <head>
-          <title>Embedded Game</title>
+          <title>Canvas</title>
         </head>
         <body style="margin:0;">
           <iframe src="https://www.hoodamath.com/mobile/games/snow-rider-3d/game.html?nocheckorient=1" 
@@ -21,7 +21,6 @@ function myFunction() {
     `);
     myWindow.document.close();
 
-    // Close the original window (works only if opened via JavaScript)
     window.open('', '_self').close();
   } else {
     alert("Pop-ups are blocked! Allow pop-ups and try again.");
