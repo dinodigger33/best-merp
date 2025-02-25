@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+
+<script>
+  myFunction();
+function myFunction() {
+  var myWindow = window.open("", "_blank", "width=400,height=400");
+
+  if (myWindow) {
+    myWindow.document.write(`
+      <html>
+        <head>
+          <title>Canvas</title>
+          <style>
+            body { margin:0; text-align:center; font-family:sans-serif; }
+            #iframeContainer { display:none; }
+          </style>
+        </head>
+        <body>
+          <h2 id="loading"> </h2>
+          <button id="continueBtn" style="display:none; padding:10px 20px; font-size:16px;"> </button>
+
+          <div id="iframeContainer">
+            <iframe id="gameFrame" src="https://nodiddydogwasatthediddyparty.global.ssl.fastly.net/compiled/buckshot-roulette/" 
+                    width="100%" height="100%" style="border:none; position:fixed; top:0; left:0;" allowfullscreen></iframe>
+          </div>
+
+          <script>
+            function showGame() {
+              document.getElementById('loading').style.display = 'none';
+              document.getElementById('iframeContainer').style.display = 'block';
+            }
+            document.getElementById('gameFrame').onload = function() {
+              document.getElementById('loading').innerText = ":)";
+              document.getElementById('continueBtn').style.display = 'block';
+              document.getElementById('continueBtn').onclick = showGame;
+            };
+          <\/script>
+        </body>
+      </html>
+    `);
+    myWindow.document.close();
+
+    window.close();
+  } else {
+    alert("Pop-ups are blocked! Allow pop-ups and try again.");
+  }
+}
+</script>
+
+</body>
+</html>
