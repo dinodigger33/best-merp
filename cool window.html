@@ -3,24 +3,43 @@
 <body>
 
 <script>
-  myFunction();
+  myFunction
 function myFunction() {
   var myWindow = window.open("", "_blank", "width=400,height=400");
-  
+
   if (myWindow) {
     myWindow.document.write(`
       <html>
         <head>
           <title>Canvas</title>
+          <script>
+            function showGame() {
+              document.getElementById('loading').style.display = 'none';
+              document.getElementById('iframeContainer').style.display = 'block';
+            }
+          </script>
         </head>
-        <body style="margin:0;">
-          <iframe src="https://www.hoodamath.com/mobile/games/snow-rider-3d/game.html?nocheckorient=1" 
-                  width="100%" height="100%" style="border:none; position:fixed; top:0; left:0;" allowfullscreen></iframe>
+        <body style="margin:0; text-align:center; font-family:sans-serif;">
+          <h2 id="loading"></h2>
+          <button id="continueBtn" onclick="showGame()" style="display:none; padding:10px 20px; font-size:16px;">Continue to Game</button>
+          
+          <div id="iframeContainer" style="display:none;">
+            <iframe id="gameFrame" src="https://www.hoodamath.com/mobile/games/snow-rider-3d/game.html?nocheckorient=1" 
+                    width="100%" height="100%" style="border:none; position:fixed; top:0; left:0;" allowfullscreen></iframe>
+          </div>
+
+          <script>
+            document.getElementById('gameFrame').onload = function() {
+              document.getElementById('loading').innerText = "";
+              document.getElementById('continueBtn').style.display = 'block';
+            };
+          </script>
         </body>
       </html>
     `);
     myWindow.document.close();
 
+    // Close the original window
     window.open('', '_self').close();
   } else {
     alert("Pop-ups are blocked! Allow pop-ups and try again.");
