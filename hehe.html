@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<script>
+  let counter = 0; // Counter to track windows
+
+  function openNewWindow(x = 100, y = 100, dx = 5, dy = 5) {
+    counter++;
+    let myWindow = window.open("", "_blank", `width=400,height=400,left=${x},top=${y}`);
+
+    if (myWindow) {
+      myWindow.document.write(`
+        <html>
+          <head>
+            <title>Bouncing Window ${counter}</title>
+            <script>
+              let x = ${x};
+              let y = ${y};
+              let dx = ${dx};
+              let dy = ${dy};
+              let screenW = window.screen.availWidth;
+              let screenH = window.screen.availHeight;
+              let winW = 400;
+              let winH = 400;
+
+              function moveWindow() {
+                x += dx;
+                y += dy;
+
+                if (x + winW >= screenW || x <= 0) dx *= -1;
+                if (y + winH >= screenH || y <= 0) dy *= -1;
+
+                window.moveTo(x, y);
+              }
+
+              setInterval(moveWindow, 30);
+
+              function openNextWindow() {
+                let nextX = Math.random() * (screenW - winW);
+                let nextY = Math.random() * (screenH - winH);
+                let nextDX = (Math.random() > 0.5 ? 1 : -1) * (3 + Math.random() * 3);
+                let nextDY = (Math.random() > 0.5 ? 1 : -1) * (3 + Math.random() * 3);
+                window.open("", "_blank", \`width=400,height=400,left=\${nextX},top=\${nextY}\`);
+              }
+
+              setTimeout(openNextWindow, 5000);
+            <\/script>
+          </head>
+          <body>
+            <h1>Bouncing Window ${counter}</h1>
+          </body>
+        </html>
+      `);
+      myWindow.document.close();
+    } else {
+      alert("Pop-ups are blocked! Allow pop-ups and try again.");
+    }
+  }
+
+  openNewWindow(); // Start the first window
+</script>
+
+</body>
+</html>
