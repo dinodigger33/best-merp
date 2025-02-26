@@ -5,8 +5,8 @@
 <script>
   let totalWindows = 5; // Number of bouncing windows
   let windows = []; // Store window references
-  let imageUrl = "https://via.placeholder.com/100"; // Change this to your image URL
-  let windowSize = 150; // Uniform window size
+  let imageUrl = "https://via.placeholder.com/100"; // Change to your image URL
+  let windowSize = 150; // Ensure all windows are uniform size
 
   function openBouncingWindow(index, x = 100, y = 100, dx = 5, dy = 5) {
     let myWindow = window.open("", `_blank`, `width=${windowSize},height=${windowSize},left=${x},top=${y}`);
@@ -24,8 +24,6 @@
               let dx = ${dx};
               let dy = ${dy};
               let gravity = 0.5;
-              let bounceFactor = 0.8;
-              let friction = 0.99;
               let isDragging = false;
               let lastX = 0, lastY = 0;
               let screenW = window.screen.availWidth;
@@ -40,18 +38,13 @@
 
                   // Bounce off walls
                   if (x + winSize >= screenW || x <= 0) dx *= -1;
-
-                  // Bounce off floor
                   if (y + winSize >= screenH) {
                     y = screenH - winSize;
-                    dy *= -bounceFactor; // Reverse velocity
-                    dx *= friction; // Apply friction
+                    dy *= -1; // Reverse velocity perfectly (no energy loss)
                   }
-
-                  // Bounce off ceiling
                   if (y <= 0) {
                     y = 0;
-                    dy *= -bounceFactor;
+                    dy *= -1;
                   }
 
                   window.moveTo(x, y);
@@ -76,8 +69,8 @@
                   window.moveTo(x, y);
                   lastX = e.screenX;
                   lastY = e.screenY;
-                  dx = deltaX; // Update velocity for fling
-                  dy = deltaY; 
+                  dx = deltaX * 0.4; // Fling effect (multiplier controls speed)
+                  dy = deltaY * 0.4;
                 }
               });
 
@@ -97,12 +90,12 @@
     }
   }
 
-  // Open 5 bouncing windows
+  // Open 5 bouncing windows with identical sizes
   for (let i = 0; i < totalWindows; i++) {
     let startX = Math.random() * (window.screen.availWidth - windowSize);
     let startY = Math.random() * (window.screen.availHeight / 2);
-    let velocityX = (Math.random() > 0.5 ? 1 : -1) * (2 + Math.random() * 3);
-    let velocityY = -(2 + Math.random() * 5); // Start with upward motion
+    let velocityX = (Math.random() > 0.5 ? 1 : -1) * (3 + Math.random() * 3);
+    let velocityY = -(3 + Math.random() * 5); // Start with upward motion
 
     openBouncingWindow(i, startX, startY, velocityX, velocityY);
   }
