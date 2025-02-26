@@ -2,15 +2,17 @@
 <html>
 <body>
 
+<input type="number" id="windowCount" placeholder="Number of windows" value="5" min="1" max="20">
+<button onclick="openWindows()">Open Windows</button>
+
 <script>
-  let totalWindows = 5; // Number of bouncing windows
   let windows = []; // Store window references
   let imageUrl = "https://github.com/dinodigger33/best-merp/blob/main/frankfurt.jpg?raw=true"; // Change to your image URL
-  let windowSize = 150; // Window size
+  let windowSize = 150; // Window size (ensuring consistent size)
   let bounceSound = new Audio("https://github.com/dinodigger33/best-merp/raw/refs/heads/main/hamburger-sound-effect.mp3"); // Sound effect URL
 
   function openBouncingWindow(index, x = 100, y = 100, dx = 5, dy = -10) {
-    let myWindow = window.open("", `_blank`, `width=${windowSize},height=${windowSize},left=${x},top=${y},resizable=no`);
+    let myWindow = window.open("", `_blank`, `width=${windowSize + 20},height=${windowSize + 40},left=${x},top=${y},resizable=no`);
 
     if (myWindow) {
       windows.push(myWindow); // Store reference
@@ -31,7 +33,11 @@
               let screenW = window.screen.availWidth;
               let screenH = window.screen.availHeight;
               let winSize = ${windowSize};
-              let bounceSound = new Audio("https://www.fesliyanstudios.com/play-mp3/4382");
+              let bounceSound = new Audio("https://github.com/dinodigger33/best-merp/raw/refs/heads/main/hamburger-sound-effect.mp3");
+              
+              function adjustWindowSize() {
+                window.resizeTo(winSize, winSize);
+              }
 
               function moveWindow() {
                 if (!isDragging) {
@@ -69,6 +75,7 @@
               }
 
               setInterval(moveWindow, 30);
+              setTimeout(adjustWindowSize, 100);
 
               // Dragging behavior
               window.addEventListener("mousedown", (e) => {
@@ -111,14 +118,19 @@
     }
   }
 
-  // Open 5 bouncing windows
-  for (let i = 0; i < totalWindows; i++) {
-    let startX = Math.random() * (window.screen.availWidth - windowSize);
-    let startY = Math.random() * (window.screen.availHeight / 2);
-    let velocityX = (Math.random() > 0.5 ? 1 : -1) * (3 + Math.random() * 3);
-    let velocityY = -(5 + Math.random() * 5); // Start with upward motion
+  function openWindows() {
+    let totalWindows = parseInt(document.getElementById("windowCount").value) || 5;
+    windows.forEach(win => win.close()); // Close existing windows
+    windows = [];
+    
+    for (let i = 0; i < totalWindows; i++) {
+      let startX = Math.random() * (window.screen.availWidth - windowSize);
+      let startY = Math.random() * (window.screen.availHeight / 2);
+      let velocityX = (Math.random() > 0.5 ? 1 : -1) * (3 + Math.random() * 3);
+      let velocityY = -(5 + Math.random() * 5); // Start with upward motion
 
-    openBouncingWindow(i, startX, startY, velocityX, velocityY);
+      openBouncingWindow(i, startX, startY, velocityX, velocityY);
+    }
   }
 </script>
 
