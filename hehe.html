@@ -3,12 +3,13 @@
 <body>
 
 <script>
-  let totalWindows = 5; // Limit the number of windows
+  let totalWindows = 5; // Number of bouncing windows
   let windows = []; // Store window references
   let imageUrl = "https://via.placeholder.com/100"; // Change this to your image URL
+  let windowSize = 150; // Uniform window size
 
   function openBouncingWindow(index, x = 100, y = 100, dx = 5, dy = 5) {
-    let myWindow = window.open("", `_blank`, `width=150,height=150,left=${x},top=${y}`);
+    let myWindow = window.open("", `_blank`, `width=${windowSize},height=${windowSize},left=${x},top=${y}`);
 
     if (myWindow) {
       windows.push(myWindow); // Store reference
@@ -24,37 +25,65 @@
               let dy = ${dy};
               let gravity = 0.5;
               let bounceFactor = 0.8;
-              let friction = 0.98;
+              let friction = 0.99;
+              let isDragging = false;
+              let lastX = 0, lastY = 0;
               let screenW = window.screen.availWidth;
               let screenH = window.screen.availHeight;
-              let winW = 150;
-              let winH = 150;
+              let winSize = ${windowSize};
 
               function moveWindow() {
-                dy += gravity; // Apply gravity
-                x += dx;
-                y += dy;
+                if (!isDragging) {
+                  dy += gravity; // Apply gravity
+                  x += dx;
+                  y += dy;
 
-                // Bounce off walls
-                if (x + winW >= screenW || x <= 0) dx *= -1;
+                  // Bounce off walls
+                  if (x + winSize >= screenW || x <= 0) dx *= -1;
 
-                // Bounce off floor
-                if (y + winH >= screenH) {
-                  y = screenH - winH; 
-                  dy *= -bounceFactor; // Reverse velocity with dampening
-                  dx *= friction; // Apply friction on impact
+                  // Bounce off floor
+                  if (y + winSize >= screenH) {
+                    y = screenH - winSize;
+                    dy *= -bounceFactor; // Reverse velocity
+                    dx *= friction; // Apply friction
+                  }
+
+                  // Bounce off ceiling
+                  if (y <= 0) {
+                    y = 0;
+                    dy *= -bounceFactor;
+                  }
+
+                  window.moveTo(x, y);
                 }
-
-                // Bounce off ceiling
-                if (y <= 0) {
-                  y = 0;
-                  dy *= -bounceFactor;
-                }
-
-                window.moveTo(x, y);
               }
 
               setInterval(moveWindow, 30);
+
+              // Drag and fling behavior
+              window.addEventListener("mousedown", (e) => {
+                isDragging = true;
+                lastX = e.screenX;
+                lastY = e.screenY;
+              });
+
+              window.addEventListener("mousemove", (e) => {
+                if (isDragging) {
+                  let deltaX = e.screenX - lastX;
+                  let deltaY = e.screenY - lastY;
+                  x += deltaX;
+                  y += deltaY;
+                  window.moveTo(x, y);
+                  lastX = e.screenX;
+                  lastY = e.screenY;
+                  dx = deltaX; // Update velocity for fling
+                  dy = deltaY; 
+                }
+              });
+
+              window.addEventListener("mouseup", () => {
+                isDragging = false;
+              });
             <\/script>
           </head>
           <body style="margin:0; display:flex; justify-content:center; align-items:center; background:black;">
@@ -70,7 +99,7 @@
 
   // Open 5 bouncing windows
   for (let i = 0; i < totalWindows; i++) {
-    let startX = Math.random() * (window.screen.availWidth - 150);
+    let startX = Math.random() * (window.screen.availWidth - windowSize);
     let startY = Math.random() * (window.screen.availHeight / 2);
     let velocityX = (Math.random() > 0.5 ? 1 : -1) * (2 + Math.random() * 3);
     let velocityY = -(2 + Math.random() * 5); // Start with upward motion
