@@ -16,6 +16,20 @@
   let windowSize = 150; // Window size (ensuring consistent size)
   let bounceSound = new Audio("https://github.com/dinodigger33/best-merp/raw/refs/heads/main/hamburger-sound-effect.mp3"); // Updated sound effect URL
 
+  function openWindows() {
+    let count = parseInt(document.getElementById("windowCount").value);
+    let gravity = parseFloat(document.getElementById("gravity").value);
+    let bounceFactor = parseFloat(document.getElementById("bounceFactor").value);
+    
+    for (let i = 0; i < count; i++) {
+      let startX = Math.random() * (window.screen.availWidth - windowSize);
+      let startY = Math.random() * (window.screen.availHeight - windowSize);
+      let dx = (Math.random() - 0.5) * 10;
+      let dy = (Math.random() - 0.5) * 10;
+      openBouncingWindow(i, startX, startY, dx, dy, gravity, bounceFactor);
+    }
+  }
+
   function openBouncingWindow(index, x = 100, y = 100, dx = 5, dy = -10, gravity, bounceFactor) {
     let myWindow = window.open("", `_blank`, `width=${windowSize + 20},height=${windowSize + 40},left=${x},top=${y},resizable=no`);
 
