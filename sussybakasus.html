@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Redirect Test</title>
+  <script>
+    // This redirect happens after a delay, potentially bypassing static filters
+    setTimeout(() => {
+      window.location.href = "https://www.reddit.com";
+    }, 1000);
+  </script>
+</head>
+<body>
+  <p>If you're not redirected, your filter is working!</p>
+</body>
+</html>
